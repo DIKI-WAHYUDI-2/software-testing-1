@@ -1,9 +1,12 @@
 import model.User;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Main {
+    private Scanner scanner;
     private final String fileName = "src/data/data.txt";
 
     public static void main(String[] args) {
@@ -13,20 +16,13 @@ public class Main {
         User user = new User();
 
         while (true) {
-            System.out.println("Halo, selamat datang di aplikasi kami!");
-            System.out.println("Silahkan pilih menu: ");
-            System.out.println("1. Daftar");
-            System.out.println("2. Login");
-            System.out.println("3. Keluar");
-            System.out.print("Pilihan: ");
+            System.out.println("Halo, selamat datang di aplikasi kami!\nSilahkan pilih menu:\n1. Daftar\n2. Login\n3. Keluar");
             pilihan = scanner.nextLine();
 
             if (pilihan.equals("1")) {
-                System.out.println("\n=== REGISTRASI ===");
-
+                System.out.println("=== DAFTAR ===");
                 System.out.print("Masukkan Username: ");
                 username = scanner.nextLine();
-
                 System.out.print("Masukkan Password: ");
                 password = scanner.nextLine();
 
@@ -35,11 +31,9 @@ public class Main {
 
                 main.registerUser(user);
             } else if (pilihan.equals("2")) {
-                System.out.println("\n=== LOGIN ===");
-
+                System.out.println("=== LOGIN ===");
                 System.out.print("Masukkan Username: ");
                 username = scanner.nextLine();
-
                 System.out.print("Masukkan Password: ");
                 password = scanner.nextLine();
 
@@ -47,60 +41,68 @@ public class Main {
                 user.setPassword(password);
 
                 main.loginUser(user);
-            } else if (pilihan.equals("3")){
-                System.out.println("Terima Kasih sudah menggunakan layanan kami.");
-                return;
+            } else if (pilihan.equals("3")) {
+                System.out.println("Terima kasih telah menggunakan aplikasi!");
+                break;
+            } else {
+                System.out.println("Input tidak valid, silakan coba lagi.");
             }
         }
     }
 
+    // Fungsi untuk mendaftarkan user baru ke dalam file
     private void registerUser(User user) {
         String username = user.getUsername();
         String password = user.getPassword();
-        String data = username + "," + password; // Perbaikan format penyimpanan
+        String template = "Username: " + username + "\nPassword: " + password + "\n";
 
-        try (FileWriter fileWriter = new FileWriter(fileName, true);
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-
-            bufferedWriter.write(data);
-            bufferedWriter.newLine(); // Tambah baris baru agar user berikutnya ada di baris selanjutnya
-            System.out.println("[DEBUG] Data berhasil ditulis ke file: " + data);
-            System.out.println("Registrasi berhasil! Silahkan login.");
-
+        try (FileWriter fileWriter = new FileWriter(fileName, true)) { // Mode append agar data lama tidak terhapus
+            fileWriter.write(template);
+            System.out.println("[DEBUG] Data berhasil disimpan: " + template); // Debug: Menampilkan data yang disimpan
+            System.out.println("Pendaftaran berhasil!");
         } catch (IOException e) {
-            System.out.println("Terjadi kesalahan saat menyimpan data: " + e.getMessage());
+            System.out.println("[ERROR] Terjadi kesalahan saat menyimpan data: " + e.getMessage()); // Debug: Menampilkan error jika gagal menyimpan
         }
     }
 
+    // Fungsi untuk login user dengan mencocokkan data dalam file
     private void loginUser(User user) {
         String username = user.getUsername();
         String password = user.getPassword();
-        String searchUser = username + "," + password; // Format login harus sesuai dengan penyimpanan
 
-        try (Scanner scanner = new Scanner(new File(fileName))) {
-            boolean found = false;
-            int lineNumber = 0;
+        System.out.println("[DEBUG] Mencari user dengan Username: " + username + " dan Password: " + password);
 
+        List<String> searchData = new ArrayList<>();
+        searchData.add("Username: " + username);
+        searchData.add("Password: " + password);
+
+        try {
+            File file = new File(fileName);
+            scanner = new Scanner(file);
+            boolean usernameFound = false;
+            boolean passwordFound = false;
+
+            // Membaca file baris per baris untuk mencocokkan username dan password
             while (scanner.hasNextLine()) {
-                lineNumber++;
                 String line = scanner.nextLine();
+                System.out.println("[DEBUG] Membaca baris: " + line); // Debug: Menampilkan baris yang sedang dibaca
 
-                System.out.println("[DEBUG] Membaca baris ke-" + lineNumber + ": " + line); // Debug print
-
-                if (line.equals(searchUser)) {
-                    found = true;
-                    break;
+                if (line.equals(searchData.get(0))) { // Mencocokkan username
+                    usernameFound = true;
+                }
+                if (line.equals(searchData.get(1))) { // Mencocokkan password
+                    passwordFound = true;
                 }
             }
 
-            if (found) {
+            // Menentukan apakah login berhasil berdasarkan hasil pencocokan
+            if (usernameFound && passwordFound) {
                 System.out.println("Login berhasil! Selamat datang, " + username);
             } else {
-                System.out.println("Username atau password salah.");
+                System.out.println("[ERROR] Username atau password salah."); // Debug: Menampilkan pesan jika login gagal
             }
-
         } catch (IOException e) {
-            System.out.println("Terjadi kesalahan saat membaca file: " + e.getMessage());
+            System.out.println("[ERROR] File tidak ditemukan: " + e.getMessage()); // Debug: Menampilkan error jika file tidak ditemukan
         }
     }
 }
